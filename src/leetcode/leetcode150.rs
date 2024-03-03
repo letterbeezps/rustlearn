@@ -1036,3 +1036,159 @@ pub fn find_min_arrow_shots(points: Vec<Vec<i32>>) -> i32 {
     }
     res
 }
+
+pub fn is_valid(s: String) -> bool {
+    let mut stack = vec![];
+    for c in s.chars() {
+        match c {
+            '(' | '{' | '[' => {
+                stack.push(c)
+            },
+            ')' | '}' | ']' => {
+                if let Some(cc) = stack.pop() {
+                    let correct = match c {
+                        ')' => cc == '(',
+                        '}' => cc == '{',
+                        ']' => cc == '[',
+                        _ => true
+                    };
+                    if !correct {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+            _ => {}
+        }
+    }
+    stack.is_empty()
+}
+
+pub fn simplify_path(path: String) -> String {
+    let mut path = path;
+    path += "/";
+    let mut res = vec![];
+    let mut s = "".to_string();
+    for c in path.chars() {
+        let x = c.to_string();
+        if res.len() == 0 {
+            res.push(x);
+        } else if x != "/" {
+            s += &x;
+        } else {
+            if s == ".." {
+                if res.len() > 1 {
+                    res.pop();
+                    while let Some(cc) = res.last() {
+                        if cc == "/" {
+                            break;
+                        } else {
+                            res.pop();
+                        }
+                    }
+                }
+            } else if s != "." && !s.is_empty() {
+                res.push(s);
+                res.push("/".to_string());
+            }
+            s = "".to_string();
+        }
+    }
+    if res.len() > 1 {
+        res.pop();
+    }
+    res.join("")
+}
+
+struct MinStack {
+    stack: Vec<i32>,
+    min_stack: Vec<i32>,
+}
+
+impl MinStack {
+
+    fn new() -> Self {
+        Self {
+            stack: vec![],
+            min_stack: vec![i32::MAX],
+        }
+    }
+    
+    fn push(&mut self, val: i32) {
+        self.stack.push(val);
+        let min_val = self.min_stack.last().unwrap();
+        self.min_stack.push(val.min(*min_val));
+    }
+    
+    fn pop(&mut self) {
+        self.stack.pop();
+        self.min_stack.pop();
+    }
+    
+    fn top(&self) -> i32 {
+        *self.stack.last().unwrap()
+    }
+    
+    fn get_min(&self) -> i32 {
+        *self.min_stack.last().unwrap()
+    }
+}
+
+pub fn eval_rpn(tokens: Vec<String>) -> i32 {
+    let mut stack = vec![];
+
+    for token in tokens {
+       if let Ok(val) = token.parse::<i32>() {
+        stack.push(val);
+       } else {
+        let num2 = stack.pop().unwrap();
+        let num1 = stack.pop().unwrap();
+        match token.as_str() {
+            "+" => stack.push(num1 + num2),
+            "-" => stack.push(num1 - num2),
+            "*" => stack.push(num1 * num2),
+            "/" => stack.push(num1 / num2),
+            _ => {}
+
+        }
+       }
+    }
+    stack[0]
+}
+
+
+pub fn calculate(s: String) -> i32 {
+    let mut op = vec![1];
+    let mut sign = 1;
+    let mut res = 0;
+
+    let mut num_chars = vec![];
+    let s_chars :Vec<char> = s.chars().into_iter().collect();
+    for i in 0..s_chars.len() {
+        let c = s_chars[i];
+        match c {
+            ' ' => {},
+            '(' => op.push(sign),
+            '+' => {
+                sign = *op.last().unwrap()
+            }
+            '-' => sign = *op.last().unwrap() * -1,
+            ')' => {
+                op.pop();
+            },
+            _ => {
+                num_chars.push(c);
+                if i == s_chars.len() - 1 || !s_chars[i+1].is_numeric() {
+                    let num_val = num_chars.iter().collect::<String>().parse::<i32>().unwrap();
+                    res += sign * num_val;
+                    num_chars.clear();
+
+                }
+            }
+        }
+    }
+    res
+}
+
+
