@@ -1,5 +1,5 @@
 
-use std::collections::{HashMap, HashSet};
+use std::{cell::{Ref, RefCell}, collections::{HashMap, HashSet, LinkedList}, rc::Rc};
 use rand::seq::SliceRandom;
 
 
@@ -1190,5 +1190,318 @@ pub fn calculate(s: String) -> i32 {
     }
     res
 }
+
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct ListNode {
+  pub val: i32,
+  pub next: Option<Box<ListNode>>
+}
+
+impl ListNode {
+  #[inline]
+  fn new(val: i32) -> Self {
+    ListNode {
+      next: None,
+      val
+    }
+  }
+}
+
+pub fn add_two_numbers(l1: Option<Box<ListNode>>, l2: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+    let mut dummy = Some(Box::new(ListNode::new(0)));
+    
+    let mut carry = 0;
+    let mut l1 = l1;
+    let mut l2 = l2;
+    let mut cur = &mut dummy;
+    while l1.is_some() || l2.is_some() || carry != 0 {
+        let n1;
+        let n2;
+        if let Some(node1) = l1 {
+            n1 = node1.val;
+            l1 = node1.next;
+        } else {
+            n1 = 0;
+        }
+        if let Some(node2) = l2 {
+            n2 = node2.val;
+            l2 = node2.next;
+        } else {
+            n2 = 0;
+        }
+
+        let new_val = (n1+n2+carry) % 10;
+        let new_node = Box::new(ListNode::new(new_val));
+        cur.as_mut().unwrap().next = Some(new_node);
+        cur = &mut cur.as_mut().unwrap().next;
+        carry = (n1+n2+carry) / 10;
+    } 
+    dummy.unwrap().next
+}
+
+
+pub fn merge_two_lists(list1: Option<Box<ListNode>>, list2: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+    return match (list1, list2) {
+        (Some(mut cur1), Some(mut cur2)) => {
+            if cur1.val <= cur2.val {
+                let next = cur1.next.take();
+                cur1.next = merge_two_lists(next, Some(cur2));
+                return Some(cur1);
+            } else {
+                let next = cur2.next.take();
+                cur2.next = merge_two_lists(next, Some(cur1));
+                return Some(cur2);
+            }
+        },
+        (x, y) => x.or(y),
+    }
+}
+
+
+pub fn reverse_between(head: Option<Box<ListNode>>, left: i32, right: i32) -> Option<Box<ListNode>> {
+    let mut dummy = Some(Box::new(ListNode{val:0, next: head}));
+    let mut pre = &mut dummy;
+    for _ in 1..left {
+        pre = &mut pre.as_mut().unwrap().next;
+    }
+    let cur = &mut pre.as_mut().unwrap().next.take();
+
+    for _ in 0..right-left {
+        let mut cur_next =  cur.as_mut().unwrap().next.take();
+        cur.as_mut().unwrap().next = cur_next.as_mut().unwrap().next.take();
+        cur_next.as_mut().unwrap().next = pre.as_mut().unwrap().next.take();
+        pre.as_mut().unwrap().next = cur_next;
+    }
+
+    while pre.as_ref().unwrap().next.is_some() {
+        pre = &mut pre.as_mut().unwrap().next
+    }
+    pre.as_mut().unwrap().next = cur.take();
+
+    dummy.unwrap().next
+}
+
+
+pub fn reverse_k_group(head: Option<Box<ListNode>>, k: i32) -> Option<Box<ListNode>> {
+    let mut dummy = Some(Box::new(ListNode{val: 0, next: head}));
+    let mut pre = &mut dummy;
+    while  pre.as_ref().unwrap().next.is_some() {
+        let mut pre_check = &mut pre.clone();
+        let mut next_num_check = 0;
+        while pre_check.as_ref().unwrap().next.is_some() {
+            pre_check = &mut pre_check.as_mut().unwrap().next;
+            next_num_check += 1;
+            if next_num_check == k {
+                break;
+            }
+        }
+        if next_num_check < k {
+            break;
+        }
+        let cur = &mut pre.as_mut().unwrap().next.take();
+        for _ in 0..k-1 {
+            let mut cur_next = cur.as_mut().unwrap().next.take();
+            if cur_next.is_none() {
+                break;
+            }
+            cur.as_mut().unwrap().next = cur_next.as_mut().unwrap().next.take();
+            cur_next.as_mut().unwrap().next = pre.as_mut().unwrap().next.take();
+            pre.as_mut().unwrap().next = cur_next;
+        }
+        while pre.as_ref().unwrap().next.is_some() {
+            pre = &mut pre.as_mut().unwrap().next
+        }
+        pre.as_mut().unwrap().next = cur.take();
+        pre = &mut pre.as_mut().unwrap().next
+    }
+    dummy.unwrap().next
+}
+
+pub fn remove_nth_from_end(head: Option<Box<ListNode>>, n: i32) -> Option<Box<ListNode>> {
+    let mut dummy = Some(Box::new(ListNode{val: 0, next: head}));
+    let mut pre = & dummy;
+    let mut step = 0;
+    for _ in 0..n {
+        pre = & pre.as_ref().unwrap().next;
+    }
+    while pre.as_ref().unwrap().next.is_some() {
+        pre = & pre.as_ref().unwrap().next;
+        step += 1;
+    }
+    let mut cur = &mut dummy;
+    for _ in 0..step {
+        cur = &mut cur.as_mut().unwrap().next;
+    }
+    let mut cur_next = cur.as_mut().unwrap().next.take();
+    cur.as_mut().unwrap().next = cur_next.as_mut().unwrap().next.take();
+    dummy.unwrap().next
+}
+
+pub fn delete_duplicates(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+    let mut head = head;
+    let mut dummy = Some(Box::new(ListNode::new(101)));
+    let mut pre = &mut dummy;
+    let mut last_val = 101;
+    while let Some(mut cur) = head {
+        head = cur.next.take();
+        if (head.is_some() && head.as_ref().unwrap().val == cur.val) || cur.val == last_val {
+            last_val = cur.val;
+        } else {
+            last_val = cur.val;
+            pre.as_mut().unwrap().next = Some(cur);
+            pre = &mut pre.as_mut().unwrap().next;
+        }
+    }
+    dummy.unwrap().next
+}
+
+pub fn rotate_right(head: Option<Box<ListNode>>, k: i32) -> Option<Box<ListNode>> {
+    if head.is_none() || head.as_ref().unwrap().next.is_none() || k == 0 {
+        return head;
+    }
+    let mut k = k;
+    let mut length = 0;
+    let mut pre_check = & head;
+    while pre_check.as_ref().unwrap().next.is_some() {
+        pre_check = & pre_check.as_ref().unwrap().next;
+        length += 1;
+    }
+    k %= length;
+    if k == 0 {
+        return head;
+    } 
+    println!("k, {:?}", k);
+    let mut res = Some(Box::new(ListNode::new(0)));
+    let mut dummy = Some(Box::new(ListNode{val: 0, next: head}));
+    let mut pre = & dummy;
+    let mut step = 0;
+    for _ in 0..k {
+        pre = & pre.as_ref().unwrap().next;
+    }
+    while pre.as_ref().unwrap().next.is_some() {
+        pre = & pre.as_ref().unwrap().next;
+        step += 1;
+    }
+
+    let mut cur = &mut dummy;
+    for _ in 0..step {
+        cur = &mut cur.as_mut().unwrap().next;
+    }
+    res.as_mut().unwrap().next = cur.as_mut().unwrap().next.take();
+    let old_pre = &mut dummy;
+    let mut res_cur = &mut res;
+    while res_cur.as_ref().unwrap().next.is_some() {
+        res_cur = &mut res_cur.as_mut().unwrap().next;
+    }
+    res_cur.as_mut().unwrap().next = old_pre.as_mut().unwrap().next.take();
+
+    res.unwrap().next
+}
+
+
+pub fn partition(head: Option<Box<ListNode>>, x: i32) -> Option<Box<ListNode>> {
+    let (mut left, mut right) = (None, None);
+    let mut left_p = &mut left;
+    let mut right_p = &mut right;
+    
+    let mut p = head;
+    while let Some(mut cur) = p {
+        p = cur.next.take();
+        if cur.val < x {
+            left_p = &mut left_p.insert(cur).next;
+        } else {
+            right_p = &mut right_p.insert(cur).next;
+        }
+    }
+    *left_p = right;
+
+    left
+}
+
+struct LruNode {
+    key: i32,
+    value: i32,
+    pre: Option<Rc<RefCell<LruNode>>>,
+    next:  Option<Rc<RefCell<LruNode>>>,
+}
+
+impl LruNode {
+    fn new(key: i32, value: i32) -> Rc<RefCell<LruNode>> {
+        Rc::new(RefCell::new(LruNode{
+            key,
+            value,
+            pre: None,
+            next: None,
+        }))
+    }
+}
+
+struct LRUCache {
+    capacity: i32,
+    dummy: Rc<RefCell<LruNode>>,
+    map: HashMap<i32, Rc<RefCell<LruNode>>>,
+}
+
+impl LRUCache {
+
+    fn new(capacity: i32) -> Self {
+        let dummy = LruNode::new(0, 0);
+        dummy.borrow_mut().pre = Some(Rc::clone(&dummy));
+        dummy.borrow_mut().next = Some(Rc::clone(&dummy));
+        Self {
+            capacity,
+            dummy,
+            map: HashMap::new(),
+
+        }
+    }
+    
+    fn get(&mut self, key: i32) -> i32 {
+        if let Some(node) = self.map.get(&key) {
+            let node = Rc::clone(node);
+            let value = node.borrow().value;
+            self.remove(Rc::clone(&node));
+            self.push_front(node);
+            return value;
+        }
+        -1
+    }
+    
+    fn put(&mut self, key: i32, value: i32) {
+        if let Some(node) = self.map.get(&key) {
+            let node = Rc::clone(node);
+            node.borrow_mut().value = value;
+            self.remove(Rc::clone(&node));
+            self.push_front(node);
+            return
+        }
+        let node = LruNode::new(key, value);
+        self.map.insert(key, Rc::clone(&node));
+        self.push_front(node);
+        if self.map.len() > self.capacity as usize {
+            let last_node = self.dummy.borrow().pre.clone().unwrap();
+            self.map.remove(&last_node.borrow().key);
+            self.remove(last_node);
+        }
+    }
+
+    fn remove(&self, x: Rc<RefCell<LruNode>>) {
+        let pre = x.borrow().pre.clone().unwrap();
+        let next = x.borrow().next.clone().unwrap();
+        pre.borrow_mut().next = Some(Rc::clone(&next));
+        next.borrow_mut().pre = Some(Rc::clone(&pre));
+    }
+
+    fn push_front(&mut self, x: Rc<RefCell<LruNode>>) {
+        let next = self.dummy.borrow().next.clone();
+        x.borrow_mut().next = next.clone();
+        x.borrow_mut().pre = Some(Rc::clone(&self.dummy));
+        self.dummy.borrow_mut().next = Some(Rc::clone(&x));
+        next.unwrap().borrow_mut().pre = Some(x);
+        
+    }
+}
+
 
 
