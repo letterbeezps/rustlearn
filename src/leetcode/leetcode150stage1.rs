@@ -2,7 +2,10 @@
 use std::{cell::{Ref, RefCell}, collections::{HashMap, HashSet, LinkedList}, rc::Rc};
 use rand::seq::SliceRandom;
 
-
+/// the first 66 questions in leetcode150
+/// 数组、字符串、双指针、滑动窗口、矩阵、哈希表、区间、栈、链表。
+/// 
+/// 
 pub fn alternating_subarray(nums: Vec<i32>) -> i32 {
     let mut res = -1;
     for i in 0..nums.len() {
@@ -466,6 +469,7 @@ pub fn full_justify(words: Vec<String>, max_width: i32) -> Vec<String> {
     res
 }
 
+/// double pointer
 pub fn is_palindrome(s: String) -> bool {
     let s :String = s.chars()
                         .filter(|c| c.is_alphanumeric())
@@ -556,6 +560,7 @@ pub fn three_sum(nums: Vec<i32>) -> Vec<Vec<i32>> {
     ret
 }
 
+/// slide window
 pub fn min_sub_array_len(target: i32, nums: Vec<i32>) -> i32 {
     let mut ans = i32::MAX;
     let mut sums = vec![0; nums.len()+1];
