@@ -1424,6 +1424,7 @@ pub fn partition(head: Option<Box<ListNode>>, x: i32) -> Option<Box<ListNode>> {
     left
 }
 
+#[derive(Debug)]
 struct LruNode {
     key: i32,
     value: i32,
@@ -1509,4 +1510,13 @@ impl LRUCache {
 }
 
 
-
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_lru() {
+       let cache = LRUCache::new(3);
+       println!("count after creating  = {}", Rc::strong_count(&cache.dummy));
+       println!("{:?}", &cache.dummy.borrow().key)
+    }
+}
