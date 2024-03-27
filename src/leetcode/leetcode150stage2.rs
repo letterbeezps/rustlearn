@@ -252,4 +252,107 @@ pub fn lowest_common_ancestor(root: Option<Rc<RefCell<TreeNode>>>, p: Option<Rc<
     }
 }
 
+pub fn right_side_view(root: Option<Rc<RefCell<TreeNode>>>) -> Vec<i32> {
+    let mut ret = vec![];
+    fn dfs(root: Option<Rc<RefCell<TreeNode>>>,depth: i32, ret: &mut Vec<i32>) {
+        if let Some(ref root) = root {
+            if depth == ret.len() as i32 {
+                ret.push(root.borrow().val);
+            }
+            
+            dfs(root.borrow().right.clone(),depth+1, ret);
+        
+            dfs(root.borrow().left.clone(),depth+1, ret);
+            
+        }
+    }
+    dfs(root, 0, &mut ret);
+    ret
+}
+
+pub fn average_of_levels(root: Option<Rc<RefCell<TreeNode>>>) -> Vec<f64> {
+    fn dfs(root: Option<Rc<RefCell<TreeNode>>>, depth: usize, count: &mut Vec<(i64, i64)>) {
+        if let Some(ref root) = root {
+            if depth >= count.len() {
+                count.push((0, 0));
+            }
+            count[depth].0 += root.borrow().val as i64;
+            count[depth].1 += 1;
+            dfs(root.borrow().right.clone(),depth+1, count);
+            dfs(root.borrow().left.clone(),depth+1, count);
+        }
+    }
+    let mut count = vec![];
+    dfs(root, 0, &mut count);
+    count.into_iter().map(|(x, y)| x as f64 / y as f64).collect()
+}
+
+pub fn level_order(root: Option<Rc<RefCell<TreeNode>>>) -> Vec<Vec<i32>> {
+    if root.is_none() {
+        return vec![];
+    }
+
+    let mut ret = vec![];
+    let mut level = vec![root.clone()];
+    loop {
+        let mut new_level = vec![];
+        let mut val = vec![];
+        for node in level {
+            if let Some(ref node) = node {
+                val.push(node.borrow().val);
+                
+                new_level.push(node.borrow().left.clone());
+                new_level.push(node.borrow().right.clone());
+                
+            } 
+        }
+        if val.len() > 0 {
+            ret.push(val);
+        }
+        if new_level.len() > 0 {
+            level = new_level;
+        } else {
+            break;
+        }
+    }
+    ret
+}
+
+
+pub fn zigzag_level_order(root: Option<Rc<RefCell<TreeNode>>>) -> Vec<Vec<i32>> {
+    if root.is_none() {
+        return vec![];
+    }
+
+    let mut ret = vec![];
+    let mut level = vec![root.clone()];
+    let mut depth = 0;
+    loop {
+        let mut new_level = vec![];
+        let mut val = vec![];
+        for node in level {
+            if let Some(ref node) = node {
+                val.push(node.borrow().val);
+                new_level.push(node.borrow().left.clone());
+                new_level.push(node.borrow().right.clone());
+            } 
+        }
+
+        depth = (depth + 1) % 2;
+        if val.len() > 0 {
+            if depth == 0 {
+                val.reverse();
+            }
+            ret.push(val);
+        }
+        if new_level.len() > 0 {
+            level = new_level;
+        } else {
+            break;
+        }
+    }
+    ret
+}
+
+
 
