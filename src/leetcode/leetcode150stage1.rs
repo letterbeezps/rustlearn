@@ -1517,6 +1517,6 @@ mod test {
     fn test_lru() {
        let cache = LRUCache::new(3);
        println!("count after creating  = {}", Rc::strong_count(&cache.dummy));
-       println!("{:?}", &cache.dummy.borrow().key)
+       println!("{:?}", &cache.dummy.borrow())
     }
 }
