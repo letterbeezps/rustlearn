@@ -354,5 +354,64 @@ pub fn zigzag_level_order(root: Option<Rc<RefCell<TreeNode>>>) -> Vec<Vec<i32>> 
     ret
 }
 
+pub fn get_minimum_difference(root: Option<Rc<RefCell<TreeNode>>>) -> i32 {
 
+    fn dfs(root: Option<Rc<RefCell<TreeNode>>>, ret: &mut i32, prev: &mut Option<i32>) {
+        if let Some(ref root) = root {
+            dfs(root.borrow().left.clone(), ret, prev);
+            if let Some(prev) = *prev {
+                *ret = (*ret).min(root.borrow().val - prev);
+            }
+            *prev = Some(root.borrow().val);
+            dfs(root.borrow().right.clone(), ret, prev);
+        }
+    }
+
+    let mut ret = i32::MAX;
+    let mut prev: Option<i32> = None;
+    dfs(root, &mut ret, &mut prev);
+    ret
+}
+
+
+pub fn kth_smallest(root: Option<Rc<RefCell<TreeNode>>>, k: i32) -> i32 {
+    fn dfs(root: Option<Rc<RefCell<TreeNode>>>, ret: &mut i32, rank: &mut i32, k: i32) {
+        if let Some(ref root) = root {
+            dfs(root.borrow().left.clone(), ret, rank, k);
+            *rank += 1;
+            if k == *rank {
+                *ret = root.borrow().val;
+                return;
+            }
+            dfs(root.borrow().right.clone(), ret, rank, k);
+        }
+    }
+
+    let mut ret = 0;
+    let mut rank = 0;
+    dfs(root, &mut ret, &mut rank, k);
+    ret
+}
+
+pub fn is_valid_bst(root: Option<Rc<RefCell<TreeNode>>>) -> bool {
+    fn dfs(root: Option<Rc<RefCell<TreeNode>>>, prev: &mut Option<i32>) -> bool {
+        if let Some(ref root) = root {
+            if !dfs(root.borrow().left.clone(), prev) {
+                return false;
+            }
+            if let Some(prev) = *prev {
+                if prev >= root.borrow().val {
+                    return false;
+                }
+            }
+            *prev = Some(root.borrow().val);
+            dfs(root.borrow().right.clone(), prev)
+        } else {
+            true
+        }
+    }
+
+    let mut prev: Option<i32> = None;
+    dfs(root, &mut prev)
+}
 
