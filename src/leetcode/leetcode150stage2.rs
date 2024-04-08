@@ -415,3 +415,335 @@ pub fn is_valid_bst(root: Option<Rc<RefCell<TreeNode>>>) -> bool {
     dfs(root, &mut prev)
 }
 
+pub fn num_islands(grid: Vec<Vec<char>>) -> i32 {
+        
+    fn dfs(grid: &mut Vec<Vec<char>>, dx: &Vec<i32>, dy: &Vec<i32>, x: usize, y :usize, m: i32, n: i32) {
+        grid[x][y] = '0';
+        for i in 0..4 {
+            let (a, b) = (dx[i] + x as i32, dy[i] + y as i32);
+            if 0<=a && a<m && 0<=b && b<n && grid[a as usize][b as usize] == '1' {
+                dfs(grid, dx, dy, a as usize, b as usize, m, n);
+            }
+        }
+    }
+
+    let (m, n) = (grid.len() as i32, grid[0].len() as i32);
+    let dx = vec![0,-1,0,1];
+    let dy = vec![1,0,-1,0];
+    let mut res = 0;
+    let mut grid = grid;
+    for i in 0..m {
+        for j in 0..n {
+            if grid[i as usize][j as usize] == '1' {
+                res += 1;
+                dfs(&mut grid, &dx, &dy, i as usize, j as usize, m, n)
+            }
+        }
+    }
+
+    res
+}
+
+
+pub fn solve(grid: &mut Vec<Vec<char>>) {
+
+    fn dfs(grid: &mut Vec<Vec<char>>, dx: &Vec<i32>, dy: &Vec<i32>, x: usize, y :usize, m: i32, n: i32) {
+        if grid[x][y] != 'O'{
+            return;
+        }
+        for i in 0..4 {
+            let (a, b) = (dx[i] + x as i32, dy[i] + y as i32);
+            if 0<=a && a<m && 0<=b && b<n && vec!['O', 'Y'].contains(&grid[a as usize][b as usize]) {
+                grid[x][y] = 'Y';
+                dfs(grid, dx, dy, a as usize, b as usize, m, n);
+            }
+        }
+    }
+
+    let (m, n) = (grid.len() as i32, grid[0].len() as i32);
+    let dx = vec![0,-1,0,1];
+    let dy = vec![1,0,-1,0];
+    let mut res = 0;
+    let mut grid = grid;
+    for i in 0..m {
+        for j in 0..n {
+            if grid[i as usize][j as usize] == 'O' {
+                dfs(&mut grid, &dx, &dy, i as usize, j as usize, m, n)
+            }
+        }
+    }
+
+    for i in 0..m {
+        for j in 0..n {
+            if grid[i as usize][j as usize] == 'Y' {
+                grid[i as usize][j as usize] = 'X';
+            }
+        }
+    }
+
+}
+
+
+pub fn solve_2(grid: &mut Vec<Vec<char>>) {
+    fn dfs(grid: &mut Vec<Vec<char>>, dx: &Vec<i32>, dy: &Vec<i32>, x: usize, y :usize, m: i32, n: i32) {
+        grid[x][y] = 'Y';
+        for i in 0..4 {
+            let (a, b) = (dx[i] + x as i32, dy[i] + y as i32);
+            if 0<=a && a<m && 0<=b && b<n && grid[a as usize][b as usize] == 'O' {
+                dfs(grid, dx, dy, a as usize, b as usize, m, n);
+            }
+        }
+    }
+
+    let (m, n) = (grid.len() as i32, grid[0].len() as i32);
+    let dx = vec![0,-1,0,1];
+    let dy = vec![1,0,-1,0];
+    let mut grid = grid;
+    for i in 0..m as usize {
+        if grid[i][0] == 'O' {
+            dfs(&mut grid, &dx, &dy, i, 0, m, n);
+        }
+        if grid[i][n as usize - 1] == 'O' {
+            dfs(&mut grid, &dx, &dy, i, n as usize - 1, m, n);
+        }
+    }
+
+    for j in 0..n as usize {
+        if grid[0][j] == 'O' {
+            dfs(&mut grid, &dx, &dy, 0, j, m, n);
+        }
+        if grid[m as usize - 1][j] == 'O' {
+            dfs(&mut grid, &dx, &dy, m as usize - 1, j, m, n);
+        }
+    }
+
+    for i in 0..m as usize {
+        for j in 0..n as usize {
+            if grid[i][j] == 'O' {
+                grid[i][j] = 'X';
+            }
+            if grid[i][j] == 'Y' {
+                grid[i][j] = 'O';
+            }
+        }
+    }
+
+}
+
+pub fn calc_equation(equations: Vec<Vec<String>>, values: Vec<f64>, queries: Vec<Vec<String>>) -> Vec<f64> {
+    use std::collections::{HashMap, HashSet};
+
+    let mut graph: HashMap<String, Vec<(String, f64)>> = HashMap::new();
+    let mut ans = vec![];
+
+    for (i, v) in equations.into_iter().enumerate() {
+        let v0 = graph.entry(v[0].clone()).or_insert(vec![]);
+        v0.push((v[1].clone(), values[i]));
+        let v1 = graph.entry(v[1].clone()).or_insert(vec![]);
+        v1.push((v[0].clone(), 1. / values[i]));
+    }
+
+    fn dfs(graph: &HashMap<String, Vec<(String, f64)>>, visited: &mut HashSet<String>, start: &str, end: &str, ans: f64) -> f64 {
+        if let Some(vec) = graph.get(start) {
+            for (n, v) in vec {
+                if visited.contains(n) {
+                    continue;
+                }
+                visited.insert(n.clone());
+
+                if n == end {
+                    return  *v * ans;
+                }
+                let new_ans = dfs(graph, visited, n, end, ans * *v);
+                if new_ans != -1. {
+                    return new_ans;
+                }
+            }
+        }
+        -1.
+    }
+
+    for v in queries.iter() {
+        let (start, end) = (&v[0], &v[1]);
+        if !graph.contains_key(start) || !graph.contains_key(end) {
+            ans.push(-1.);
+            continue;
+        }
+        let mut visited = HashSet::new();
+        ans.push(dfs(&graph, &mut visited, start, end, 1.))
+    }
+
+    ans
+}
+
+
+pub fn can_finish(num_courses: i32, prerequisites: Vec<Vec<i32>>) -> bool {
+    use std::collections::HashMap;
+    let mut graph = HashMap::new();
+    for v in prerequisites.into_iter() {
+        let v_child = graph.entry(v[1]).or_insert(vec![]);
+        v_child.push(v[0]);
+    }
+
+    fn dfs(graph: &HashMap<i32, Vec<i32>>, visited: &mut HashMap<i32, i32>, cur: i32) -> bool {
+        let v = visited.entry(cur).or_default();
+        match *v {
+            1 => return true,
+            2 => return false,
+            _ => {}
+        }
+        visited.insert(cur, 1);
+        if let Some(child) = graph.get(&cur) {
+            for c in child {
+                if dfs(graph, visited, *c) {
+                    return true;
+                }
+            }
+        }
+        visited.insert(cur, 2);
+        false
+    }
+
+    let mut visited = HashMap::new();
+    for i in (0..num_courses).into_iter().rev() {
+        if dfs(&graph, &mut visited, i) {
+            return false;
+        }
+    }
+
+    true
+}
+
+
+pub fn find_order(num_courses: i32, prerequisites: Vec<Vec<i32>>) -> Vec<i32> {
+    use std::collections::HashMap;
+
+    let mut graph = HashMap::new();
+    for v in prerequisites.into_iter() {
+        let v_child = graph.entry(v[1]).or_insert(vec![]);
+        v_child.push(v[0]);
+    }
+
+    fn dfs(graph: &HashMap<i32, Vec<i32>>, visited: &mut HashMap<i32, i32>, cur: i32, ans: &mut Vec<i32>) -> bool {
+        let v = visited.entry(cur).or_default();
+        match *v {
+            1 => return true,
+            2 => return false,
+            _ => {}
+        }
+        visited.insert(cur, 1);
+        if let Some(child) = graph.get(&cur) {
+            for c in child {
+                if dfs(graph, visited, *c, ans) {
+                    return true;
+                }
+            }
+        }
+        visited.insert(cur, 2);
+        ans.push(cur);
+        false
+    }
+
+    let mut ans = vec![];
+    let mut visited = HashMap::new();
+    for i in 0..num_courses {
+        if dfs(&graph, &mut visited, i, &mut ans) {
+            return vec![];
+        }
+    }
+
+    ans.reverse();
+    ans
+}
+
+pub fn snakes_and_ladders(board: Vec<Vec<i32>>) -> i32 {
+    use std::collections::{VecDeque, HashSet};
+    let graph: Vec<i32> = board
+        .into_iter()
+        .rev()
+        .enumerate()
+        .map(|(i, mut v)| if i % 2 == 0 { v } else { v.reverse(); v })
+        .flatten()
+        .collect();
+    let length = graph.len();
+    let mut visited = HashSet::new();
+    let mut queue = VecDeque::new();
+    queue.push_back((0, 0));
+
+
+    while let Some((i, step)) = queue.pop_front() {
+        if i == length - 1 {
+            return  step;
+        }
+
+        for j in i+1..=(i+6).min(length-1) {
+            let next = if graph[j] == -1 {
+                j
+            } else {
+                graph[j] as usize - 1
+            };
+
+            if !visited.contains(&next) {
+                queue.push_back((next, step+1));
+                visited.insert(next);
+            }
+        }
+    }
+
+    -1
+}
+
+pub fn min_mutation(start_gene: String, end_gene: String, bank: Vec<String>) -> i32 {
+    use std::collections::{VecDeque, HashSet};
+    fn is_reached(s1: &String, s2: &String) -> bool {
+        let cnt = s1.chars().zip(s2.chars()).fold(
+            0, |cnt, (ch1, ch2)| 
+            if ch1 == ch2 { cnt } else { cnt + 1 });
+        cnt == 1
+    }
+
+    let mut queue = VecDeque::new();
+    let mut visited = HashSet::new();
+    queue.push_back((&start_gene, 0));
+    visited.insert(&start_gene);
+    while let Some((s, step)) = queue.pop_front() {
+        if s == &end_gene {
+            return step;
+        }
+        for next_s in bank.iter() {
+            if !visited.contains(next_s) && is_reached(s, next_s) {
+                queue.push_back((next_s, step+1));
+                visited.insert(next_s);
+            }
+        }
+    }
+    -1
+}
+
+pub fn ladder_length(begin_word: String, end_word: String, word_list: Vec<String>) -> i32 {
+    use std::collections::{VecDeque, HashSet};
+    fn is_reached(s1: &String, s2: &String) -> bool {
+        let cnt = s1.chars().zip(s2.chars()).fold(
+            0, |cnt, (ch1, ch2)| 
+            if ch1 == ch2 { cnt } else { cnt + 1 });
+        cnt == 1
+    }
+
+    let mut queue = VecDeque::new();
+    let mut visited = HashSet::new();
+    queue.push_back((&begin_word, 0));
+    visited.insert(&begin_word);
+    while let Some((s, step)) = queue.pop_front() {
+        if s == &end_word {
+            return step+1;
+        }
+        for next_s in word_list.iter() {
+            if !visited.contains(next_s) && is_reached(s, next_s) {
+                queue.push_back((next_s, step+1));
+                visited.insert(next_s);
+            }
+        }
+    }
+    0
+}
+
