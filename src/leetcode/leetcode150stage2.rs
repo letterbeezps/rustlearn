@@ -747,3 +747,192 @@ pub fn ladder_length(begin_word: String, end_word: String, word_list: Vec<String
     0
 }
 
+pub fn letter_combinations(digits: String) -> Vec<String> {
+    let m = vec!["","","abc","def","ghi","jkl","mno","pqrs","tuv","wxyz"];
+
+    let mut ret = vec![];
+    fn dfs(m: &Vec<&str>, digits: &str, ret: &mut Vec<String>, d: usize, cur: String) {
+        if d == digits.len() {
+            ret.push(cur.to_string());
+            return;
+        }
+        let cur_index = (digits.as_bytes()[d] - b'0') as usize;
+        for c in m[cur_index].chars() {
+            dfs(m, digits, ret, d+1, cur.clone() + &c.to_string())
+        }
+    }
+    if digits.is_empty() {
+        return vec![];
+    }
+    dfs(&m, &digits, &mut ret, 0, "".to_string());
+    ret
+}
+
+pub fn combine(n: i32, k: i32) -> Vec<Vec<i32>> {
+    let mut path = vec![];
+    let mut ret = vec![];
+
+    fn dfs(n: i32, k: i32, start: i32, path: &mut Vec<i32>, ret: &mut Vec<Vec<i32>>) {
+        if path.len() == k as usize {
+            ret.push(path.clone());
+            return;
+        }
+        for i in start..=(n-(k-path.len() as i32))+1 {
+            path.push(i);
+            dfs(n, k, i+1, path, ret);
+            path.pop();
+        }
+    }
+    dfs(n, k, 1, &mut path, &mut ret);
+    ret
+}
+
+pub fn permute(nums: Vec<i32>) -> Vec<Vec<i32>> {
+    use std::collections::HashSet;
+    fn dfs(nums: &Vec<i32>, ret: &mut Vec<Vec<i32>>, path: &mut Vec<i32>, visited: &mut HashSet<i32>, length: usize) {
+        if length == nums.len() {
+            ret.push(path.clone());
+            return;
+        }
+        for n in nums {
+            if !visited.contains(n) {
+                visited.insert(*n);
+                path.push(*n);
+
+                dfs(nums, ret, path, visited, length+1);
+
+                path.pop();
+                visited.remove(n);
+            }
+        }
+    }
+
+    let mut ret = vec![];
+    let mut path = vec![];
+    let mut visited = HashSet::new();
+    dfs(&nums, &mut ret, &mut path, &mut visited, 0);
+    ret
+}
+
+pub fn combination_sum(candidates: Vec<i32>, target: i32) -> Vec<Vec<i32>> {
+    let mut candidates = candidates;
+    candidates.sort();
+
+    fn dfs(candidates: &Vec<i32>, target: i32, index: usize, path: &mut Vec<i32>, ret: &mut Vec<Vec<i32>>) {
+        if target == 0 {
+            ret.push(path.clone());
+            return;
+        }
+        if target > 0 {
+            for i in index..candidates.len() {
+                if candidates[i] > target {
+                    break;
+                }
+                path.push(candidates[i]);
+                dfs(candidates, target - candidates[i], i, path, ret);
+                path.pop();
+            }
+        }
+    }
+
+    let mut ret = vec![];
+    let mut path = vec![];
+    dfs(&candidates, target, 0, &mut path, &mut ret);
+    ret
+}
+
+pub fn total_n_queens(n: i32) -> i32 {
+
+    fn dfs(u: usize, n: usize, res: &mut i32, col: &mut Vec<bool>, diag: &mut Vec<bool>, ant_diag: &mut Vec<bool>) {
+        if u == n {
+            *res += 1;
+            return;
+        }
+        for i in 0..n {
+            if !col[i] && !diag[u+n-i] && !ant_diag[u+i] {
+                col[i] = true;
+                diag[u+n-i] = true;
+                ant_diag[u+i] = true;
+
+                dfs(u+1, n, res, col, diag, ant_diag);
+
+                col[i] = false;
+                diag[u+n-i] = false;
+                ant_diag[u+i] = false;
+            }
+        }
+    }
+
+    let n = n as usize;
+    let mut res = 0;
+    let mut col = vec![false; n];
+    let mut diag = vec![false; 2*n];
+    let mut ant_diag = vec![false; 2*n];
+
+    dfs(0, n, &mut res, &mut col, &mut diag, &mut ant_diag);
+    res
+}
+
+pub fn generate_parenthesis(n: i32) -> Vec<String> {
+
+    fn dfs(cur: &str, left: usize, right: usize, n: usize, res: &mut Vec<String>) {
+        if right == n {
+            res.push(cur.to_string());
+            return;
+        }
+        if left < n {
+            dfs(&(cur.to_string() + "("), left+1, right, n, res);
+        }
+        if right < left {
+            dfs(&(cur.to_string() + ")"), left, right+1, n, res);
+        }
+    }
+    let mut res = vec![];
+    dfs("", 0, 0, n as usize, &mut res);
+    res
+}
+
+pub fn exist(board: Vec<Vec<char>>, word: String) -> bool {
+
+    fn dfs(x: usize, y: usize, u: usize, row: usize, col: usize, 
+        board: &Vec<Vec<char>>,
+        dx: &Vec<i32>,
+        dy: &Vec<i32>,
+        visited: &mut Vec<Vec<bool>>,
+        word: &Vec<char>
+    ) -> bool {
+        if u == word.len() {
+            return true;
+        }
+        visited[x][y] = true;
+        for i in 0..4 as usize {
+            let (a, b) = (x as i32 +dx[i], y as i32 +dy[i]);
+            if a>=0 && a<row as i32 && b>=0 && b<col as i32 && !visited[a as usize][b as usize] && board[a as usize][b as usize] == word[u] {
+                if dfs(a as usize, b as usize, u+1, row, col, board, dx, dy, visited, word) {
+                    return true;
+                }
+            }
+        }
+        
+        visited[x][y] = false;
+        false
+
+    }
+    let word = word.chars().collect::<Vec<char>>();
+    let (row, col) = (board.len(), board[0].len());
+    let mut visited = vec![vec![false; col]; row];
+    let dx = vec![-1, 0, 1, 0];
+    let dy = vec![0, 1, 0, -1];
+    for i in 0..row {
+        for j in 0..col {
+            if board[i][j] == word[0] {
+                if dfs(i, j, 1, row, col, &board, &dx, &dy, &mut visited, &word) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+
