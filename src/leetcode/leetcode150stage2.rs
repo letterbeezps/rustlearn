@@ -935,4 +935,190 @@ pub fn exist(board: Vec<Vec<char>>, word: String) -> bool {
     false
 }
 
+use std::collections::HashMap;
+#[derive(Clone)]
+struct Trie {
+    node: Rc<RefCell<TrieNode>>
+}
+
+struct TrieNode {
+    val: Option<bool>,
+    children: HashMap<char,Rc<RefCell<TrieNode>>>
+}
+
+
+impl Trie {
+
+    fn new() -> Self {
+        Self{
+            node: Rc::new(RefCell::new(TrieNode {
+                val:None,
+                children: HashMap::new(),
+            }))
+        }
+    }
+    
+    fn insert(&self, word: String) {
+        let mut cur = self.node.clone(); 
+        for c in word.chars() {
+            if let Some(node) = cur.clone().borrow().children.get(&c){
+                cur = node.clone();
+                continue;
+            }
+            {
+                let new_node = Rc::new(RefCell::new(TrieNode{
+                    val: None,
+                    children: HashMap::new(),
+                }));
+                cur.borrow_mut().children.insert(c, new_node.clone());
+                cur = new_node.clone();
+            }
+        }
+        cur.borrow_mut().val = Some(true);
+    }
+    
+    fn search(&self, word: String) -> bool {
+    
+        let mut cur = self.node.clone(); 
+        for c in word.chars() {
+            if let Some(node) = cur.clone().borrow().children.get(&c) {
+                cur = node.clone();
+                continue;
+            }
+            return false;
+        }
+        cur.clone().borrow().val.is_some()
+    }
+    
+    fn starts_with(&self, prefix: String) -> bool {
+        let mut cur = self.node.clone(); 
+        for c in prefix.chars() {
+            if let Some(node) = cur.clone().borrow().children.get(&c) {
+                cur = node.clone();
+                continue;
+            }
+            return false;
+        }
+        true
+    }
+}
+
+
+struct WordDictionary {
+    node: Rc<RefCell<TrieNode>>
+}
+
+impl WordDictionary {
+    
+    fn new() -> Self {
+        Self{
+            node: Rc::new(RefCell::new(TrieNode {
+                val:None,
+                children: HashMap::new(),
+            }))
+        }
+    }
+    
+    fn add_word(&self, word: String) {
+        let mut cur = self.node.clone(); 
+        for c in word.chars() {
+            if let Some(node) = cur.clone().borrow().children.get(&c){
+                cur = node.clone();
+                continue;
+            }
+            {
+                let new_node = Rc::new(RefCell::new(TrieNode{
+                    val: None,
+                    children: HashMap::new(),
+                }));
+                cur.borrow_mut().children.insert(c, new_node.clone());
+                cur = new_node.clone();
+            }
+        }
+        cur.borrow_mut().val = Some(true);
+    }
+    
+    fn search(&self, word: String) -> bool {
+        let word = word.chars().collect::<Vec<char>>();
+        Self::search_help(self.node.clone(), &word, 0)
+    }
+
+    fn search_help(node: Rc<RefCell<TrieNode>>, word: &Vec<char>, index: usize) -> bool {
+        if index == word.len() {
+            return node.clone().borrow().val.is_some();
+        }
+        let c = word[index];
+        if c != '.' {
+            if let Some(child) = node.clone().borrow().children.get(&c) {
+                return Self::search_help(child.clone(), word, index+1)
+            }
+        } else {
+            if node.borrow().children
+            .iter()
+            .any(|(_, child)| {
+                Self::search_help(child.clone(), word, index+1)
+            }) {
+                return true;
+            }
+        }
+        false
+    }
+}
+
+
+pub fn find_words(board: Vec<Vec<char>>, words: Vec<String>) -> Vec<String> {
+    let trie = Trie::new();
+    for word in words {
+        trie.insert(word);
+    }
+    let mut ret = vec![];
+    let (m, n) = (board.len(), board[0].len());
+    let dx = vec![-1, 0, 1, 0];
+    let dy = vec![0, 1, 0, -1];
+    
+    fn dfs(
+        board: &mut Vec<Vec<char>>, 
+        node: Rc<RefCell<TrieNode>>,
+        path: &str,
+        dx: &Vec<i32>,
+        dy: &Vec<i32>,
+        ret: &mut Vec<String>,
+        i: usize,
+        j: usize,
+        m: usize,
+        n: usize,
+
+    ) {
+        if node.clone().borrow().val.is_some() {
+            ret.push(path.to_string());
+            node.borrow_mut().val = None;
+        }
+        let tmp = board[i][j];
+        println!("tmp: {:?}", tmp);
+        if let Some(child) = node.clone().borrow().children.get(&tmp) {
+            if child.clone().borrow().val.is_some() {
+                ret.push(path.to_string() + &tmp.to_string());
+                child.borrow_mut().val = None;
+            }
+            board[i][j] = '#';
+            for index in 0..4 {
+                let (a, b) = (i as i32 +dx[index], j as i32 +dy[index]);
+                if a>=0 && a<m as i32 && b>=0 && b<n as i32 {
+                    dfs(board, child.clone(), &(path.to_string() + &tmp.to_string()), dx, dy, ret, a as usize, b as usize, m, n)
+                }
+            }
+            board[i][j] = tmp;
+        }
+    }
+
+    let mut board = board;
+    for i in 0..m {
+        for j in 0..n {
+            dfs(&mut board, trie.node.clone(), "", &dx, &dy, &mut ret, i, j, m, n);
+        }
+    }
+
+    ret
+}
+
 
