@@ -1121,4 +1121,112 @@ pub fn find_words(board: Vec<Vec<char>>, words: Vec<String>) -> Vec<String> {
     ret
 }
 
+pub fn sorted_array_to_bst(nums: Vec<i32>) -> Option<Rc<RefCell<TreeNode>>> {
+    fn dfs(nums: &Vec<i32>, l: usize, r: usize) -> Option<Rc<RefCell<TreeNode>>> {
+        let mid = (l+r) / 2;
+        let mut node = TreeNode::new(nums[mid]);
+        if mid > l {
+            node.left = dfs(nums, l, mid-1);
+        }
+        if mid < r {
+            node.right = dfs(nums, mid+1, r);
+        }
+        Some(Rc::new(RefCell::new(node)))
+    }
+
+    dfs(&nums, 0, nums.len() - 1)
+}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct ListNode {
+    pub val: i32,
+    pub next: Option<Box<ListNode>>
+  }
+  
+  impl ListNode {
+    #[inline]
+    fn new(val: i32) -> Self {
+      ListNode {
+        next: None,
+        val
+      }
+    }
+  }
+
+pub fn sort_list(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+    
+    fn sort(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+        let mut head = head;
+        if head.is_none() || head.as_ref().unwrap().next.is_none() {
+            return head;
+        }
+        let mut pre = & head;
+        let mut step = 0;
+        while pre.as_ref().unwrap().next.is_some() {
+            pre = & pre.as_ref().unwrap().next;
+            step += 1;
+        }
+        let mut cur = &mut head;
+        for _ in 0..step/2-1 {
+            cur = &mut cur.as_mut().unwrap().next;
+        }
+        let slow = cur.as_mut().unwrap().next.take();
+        merge(sort(head),sort(slow))
+    }
+
+    fn merge(l: Option<Box<ListNode>>, r: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+        match (l, r) {
+            (None, Some(n)) | (Some(n), None) => Some(n),
+            (Some(mut l), Some(mut r)) => {
+                if l.val < r.val {
+                    l.next = merge(l.next.take(), Some(r));
+                    Some(l)
+                } else {
+                    r.next = merge(Some(l), r.next.take());
+                    Some(r)
+                }
+            }
+            (None, None) => None,
+        }
+    }
+    sort(head)
+}
+
+
+
+pub fn merge_k_lists(lists: Vec<Option<Box<ListNode>>>) -> Option<Box<ListNode>> {
+    use std::cmp;
+    use std::collections::BinaryHeap;
+    impl PartialOrd for ListNode {
+        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            Some(self.val.cmp(&other.val).reverse())
+        }
+    }
+    
+    impl Ord for ListNode {
+        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            self.partial_cmp(other).unwrap()
+        }
+    }
+    
+    let mut heap = BinaryHeap::new();
+    for n in lists {
+        if n.is_some() {
+            heap.push(n.unwrap());
+        }
+    }
+
+    let mut dummy = Some(Box::new(ListNode::new(0)));
+    let mut pre = &mut dummy;
+    while let Some(mut node) = heap.pop() {
+        let next_node = node.next.take();
+        if next_node.is_some() {
+            heap.push(next_node.unwrap());
+        }
+        pre.as_mut().unwrap().next = Some(Box::new(ListNode::new(node.val))); 
+        pre = &mut pre.as_mut().unwrap().next;
+    }
+
+    dummy.unwrap().next
+}
 
