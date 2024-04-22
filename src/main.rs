@@ -1,4 +1,4 @@
-use leetcode::leetcode::leetcode150stage1;
+use rustlearn::leetcode::leetcode150stage1;
 
 fn main() {
     // let mut arr1 = vec![0,1,0,2,1,0,1,3,2,1,2,1];
