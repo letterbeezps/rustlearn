@@ -1,3 +1,4 @@
+use core::num;
 use std::{ cell::RefCell, rc::Rc};
 
 
@@ -1229,4 +1230,95 @@ pub fn merge_k_lists(lists: Vec<Option<Box<ListNode>>>) -> Option<Box<ListNode>>
 
     dummy.unwrap().next
 }
+
+pub fn search_range(nums: Vec<i32>, target: i32) -> Vec<i32> {
+    if nums.len() == 0 {
+        return vec![-1, -1];
+    }
+
+    let mut l = 0;
+    let mut r = nums.len() - 1;
+    let mut first = -1;
+    let mut last = -1;
+
+    while l < r {
+        let mid = (l+r) / 2;
+        if nums[mid] < target {
+            l = mid + 1;
+        } else {
+            r = mid;
+        }
+    }
+    if nums[l] == target {
+        first = l as i32;
+    }
+    l = 0;
+    r = nums.len() - 1;
+    while l < r {
+        let mid = (l+r) / 2;
+        if nums[mid] > target {
+            r = mid - 1;
+        } else {
+            l = mid;
+        }
+    }
+    if nums[l] == target {
+        last = l as i32;
+    }
+    vec![first, last]
+}
+
+
+pub fn find_min(nums: Vec<i32>) -> i32 {
+    if nums[0] < nums[nums.len()-1] {
+        return nums[0];
+    }
+    let mut l = 0;
+    let mut r = nums.len() - 1;
+    while l < r {
+        let mid = (l+r) / 2;
+        if nums[mid] >= nums[0] {
+            l = mid + 1;
+        } else {
+            r = mid;
+        }
+    }
+    nums[l]
+}
+
+pub fn find_median_sorted_arrays(nums1: Vec<i32>, nums2: Vec<i32>) -> f64 {
+    
+    fn find_kth_number(nums1: &Vec<i32>, nums2: &Vec<i32>, i: usize, j: usize, k: usize) -> i32 {
+        if nums1.len() - i > nums2.len() - j {
+            return find_kth_number(nums2, nums1, j, i, k);
+        }
+        if nums1.len() == i {
+            return nums2[j+k-1];
+        }
+        if k == 1 {
+            return nums1[i].min(nums2[j]);
+        }
+        let si = nums1.len().min(i+k/2);
+        let sj = j + k/2;
+        if nums1[si-1] > nums2[sj-1] {
+            return find_kth_number(nums1, nums2, i, sj, k - k/2);
+        } else {
+            return find_kth_number(nums1, nums2, si, j, k-si+i);
+        }
+    }
+
+    let total = nums1.len() + nums2.len();
+    if total % 2 == 0 {
+        let left = find_kth_number(&nums1, &nums2, 0, 0, total/2);
+        let right = find_kth_number(&nums1, &nums2, 0, 0, total/2+1);
+        return (left + right) as f64 / 2 as f64;
+    } else {
+        return find_kth_number(&nums1, &nums2, 0, 0, total/2+1) as f64;
+    }
+}
+
+
+
+
+
 
