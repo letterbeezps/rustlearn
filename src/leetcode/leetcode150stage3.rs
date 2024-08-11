@@ -132,10 +132,223 @@ impl MedianFinder {
     }
 }
 
+pub fn is_interleave(s1: String, s2: String, s3: String) -> bool {
+    let (row, col) = (s1.len(), s2.len());
+    if s3.len() != row+col {
+        return false;
+    }
+    let mut dp = vec![vec![false; col+1]; row+1];
+    dp[0][0] = true;
+    let s_c1 = s1.chars().into_iter().collect::<Vec<char>>();
+    let s_c2 = s2.chars().into_iter().collect::<Vec<char>>();
+    let s_c3 = s3.chars().into_iter().collect::<Vec<char>>();
+    for i in 0..row {
+        if s_c1[i] == s_c3[i] {
+            dp[i+1][0] = dp[i][0];
+        }
+    }
+    for i in 0..col {
+        if s_c2[i] == s_c3[i] {
+            dp[0][i+1] = dp[0][i];
+        }
+    }
+    for i in 1..=row {
+        for j in 1..=col {
+            match (dp[i][j-1], dp[i-1][j]) {
+                (true, true) => {
+                    dp[i][j] = (s_c3[i+j-1] == s_c1[i-1]) || (s_c3[i+j-1] == s_c2[j-1])
+                }
+                (true, false) => {
+                    dp[i][j] = (s_c3[i+j-1] == s_c2[j-1])
+                }
+                (false, true) => {
+                    dp[i][j] = (s_c3[i+j-1] == s_c1[i-1])
+                }
+                _ => {}
+            }
+        }
+    }
+    dp[row][col]
+}
 
+pub fn maximal_square(matrix: Vec<Vec<char>>) -> i32 {
+    let (m, n) = (matrix.len(), matrix[0].len());
+    let mut res = 0;
+    let mut dp = vec![vec![0; n]; m];
+    for i in 0..m {
+        for j in 0..n {
+            if matrix[i][j] == '0' {
+                dp[i][j] = 0;
+            } else {
+                dp[i][j] = 1;
+                if i > 0 && j > 0 {
+                    dp[i][j] += dp[i-1][j-1].min(dp[i-1][j]).min(dp[i][j-1])
+                }
+                res = res.max(dp[i][j])
+            }
+        }
+    }
+    res * res
+}
 
+pub fn add_binary(a: String, b: String) -> String {
+    let mut v_a = a.chars().map(|c| c.to_digit(10).unwrap() as i32).collect::<Vec<i32>>();
+    let mut v_b = b.chars().map(|c| c.to_digit(10).unwrap() as i32).collect::<Vec<i32>>();
+    
+    let mut res = vec![];
+    let mut carry = 0;
+    while !v_a.is_empty() || !v_b.is_empty() {
+        let (mut na, mut nb) = (0, 0);
+        match (v_a.pop(), v_b.pop()) {
+            (Some(x), Some(y)) => {
+                na = x;
+                nb = y;
+            }
+            (Some(x), _) => {
+                na = x;
+            }
+            (_, Some(y)) => {
+                nb = y;
+            }
+            (_, _) => {}
+        }
+        let mut tmp_sum = na + nb + carry;
+        carry = tmp_sum / 2;
+        tmp_sum %= 2;
+        res.push(tmp_sum);
+    }
+    if carry == 1 {
+        res.push(1);
+    }
+    res.reverse();
+    res.iter().map(|x| x.to_string()).collect()
+}
 
+pub fn reverse_bits(x: u32) -> u32 {
+    let mut res = 0;
+    for i in 0..32 {
+        let t = 1 & (x >> i);
+        res += t;
+        if i < 31 {
+            res = res << 1;
+        }
+    }
+    res
+}
 
+pub fn hamming_weight(n: i32) -> i32 {
+    let mut n = n;
+    let mut res = 0;
+    while n > 0 {
+        n = n & (n-1);
+        res += 1;
+    }
+    res
+}
+
+pub fn single_number(nums: Vec<i32>) -> i32 {
+    let mut res = 0;
+    for n in nums {
+        res ^= n;
+    }
+    res
+}
+
+pub fn single_number_2(nums: Vec<i32>) -> i32 {
+    let mut res = 0;
+    for bit in 0..32 {
+        let mut c = 0;
+        for n in nums.iter() {
+            c += (*n >> bit) & 1;
+        }
+        res += (c % 3) << bit;
+    }
+    res
+}
+
+pub fn range_bitwise_and(left: i32, right: i32) -> i32 {
+    let mut right = right;
+    while right > left {
+        right &= (right - 1);
+    }
+    right
+}
+
+pub fn is_palindrome(x: i32) -> bool {
+    if x < 0 {
+        return false;
+    }
+    if x < 10 {
+        return true;
+    }
+    if x % 10 == 0 {
+        return false;
+    }
+    let (mut d, mut num) = (1, x);
+    while num / d >= 10 {
+        d *= 10;
+    }
+    while num != 0 {
+        let (l, r) = (num/d, num%10);
+        if l != r {
+            return false;
+        }
+        num = (num - l * d) / 10;
+        d /= 100;
+    }
+    true
+}
+
+pub fn trailing_zeroes(n: i32) -> i32 {
+    let mut res = 0;
+    let mut i = 5;
+    while i <= n {
+        let mut x = i;
+        while i % 5 == 0 {
+            res += 1;
+            x /= 5;
+        }
+        i += 5;
+    }
+    res
+}
+
+pub fn my_sqrt(x: i32) -> i32 {
+    let (mut l, mut r) = (0, x);
+    let mut res = 0;
+    while l <= r {
+        let mid = l + ( r - l) / 2;
+        if mid as i64 * mid as i64 > x as i64 {
+            r = mid - 1;
+        } else {
+            res = mid;
+            l = mid + 1;
+        }
+    }
+    res
+}
+
+pub fn my_pow(x: f64, n: i32) -> f64 {
+    if n == 0 {
+        return  1 as f64;
+    } else if n == 1 {
+        return x;
+    } else if n < 0 {
+        return 1 as f64 / my_pow(x, -1*n);
+    }
+
+    let mut ret = 1 as f64;
+    let mut n = n;
+    let mut x = x;
+    while n > 0 {
+        if n & 1 == 1 {
+            ret *= x;
+        }
+        x *= x;
+        n /= 2;
+    }
+    ret
+}
 
 
 pub fn climb_stairs(n: i32) -> i32 {
